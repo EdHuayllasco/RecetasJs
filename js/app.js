@@ -16,11 +16,15 @@ function iniciarApp(){
     
     const modal = new bootstrap.Modal('#modal',{});
     
-    function obtenerCategorias(){
-        const url = 'https://www.themealdb.com/api/json/v1/1/categories.php';
-        fetch(url)
-            .then(answer => answer.json())
-            .then(answer => mostrarCategorias(answer.categories))
+    async function obtenerCategorias() {
+        try {
+            const url = 'https://www.themealdb.com/api/json/v1/1/categories.php';
+            const response = await fetch(url);
+            const data = await response.json();
+            mostrarCategorias(data.categories);
+        } catch (error) {
+            console.error('Error:', error);
+        }
     }
     function mostrarCategorias(categorias = []){
         categorias.forEach(categoria => {
