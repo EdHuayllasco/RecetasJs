@@ -1,5 +1,8 @@
 //Estamos utilizando la base de datos MEALDB y accedemos a ella a traves de su API
 function iniciarApp(){
+    let listaRecetas = [];
+    let paginaActual = 1;
+    let resultadosPorPagina = 9;
     const resultado = document.querySelector('#resultado');
     const selectCategorias = document.querySelector('#categorias');
     if(selectCategorias){
@@ -11,11 +14,29 @@ function iniciarApp(){
     if(favoritosHTML){
         obtenerFavoritos();
     }
-
-
-    
     const modal = new bootstrap.Modal('#modal',{});
-    
+    const btnPaginaAnterior = document.querySelector('#btnPaginaAnterior');
+    const btnPaginaSiguiente = document.querySelector('#btnPaginaSiguiente');
+    if (btnPaginaAnterior && btnPaginaSiguiente) {
+        console.log('entre');
+        btnPaginaAnterior.addEventListener('click', paginaAnterior);
+        btnPaginaSiguiente.addEventListener('click', paginaSiguiente);
+    }
+    // Función para avanzar a la página siguiente
+    function paginaSiguiente() {
+        console.log('entre Siguiente');
+        paginaActual++;
+        mostrarRecetas(listaRecetas);
+    }
+    // Función para retroceder a la página anterior
+    function paginaAnterior() {
+        if (paginaActual > 1) {
+            console.log('entre Anterior');
+            paginaActual--;
+            mostrarRecetas(listaRecetas);
+        }
+    }
+
     async function obtenerCategorias() {
         try {
             const url = 'https://www.themealdb.com/api/json/v1/1/categories.php';
@@ -40,54 +61,65 @@ function iniciarApp(){
         const url = `https://www.themealdb.com/api/json/v1/1/filter.php?c=${categoria}`;
         fetch(url)
             .then(answer => answer.json())
-            .then(answer => mostrarRecetas(answer.meals));
+            .then(answer => {
+                listaRecetas = answer.meals;
+                paginaActual = 1;
+                mostrarRecetas(listaRecetas);
+                
+            });
     }
     function mostrarRecetas(recetas = []){
         limpiarHTML(resultado);
         const heading = document.createElement('H2');
         heading.classList.add('text-center', 'text-black', 'my-5');
         heading.textContent = recetas.length ? 'Resultados Cargados' : 'No hay resultados';
-        resultado.appendChild(heading);
-        recetas.forEach(receta => {
-            const {idMeal, strMeal, strMealThumb} = receta;
-            const recetaContenedor = document.createElement('DIV');
-            recetaContenedor.classList.add('col-md-4');
+        console.log(recetas.length);
+        if(recetas.length){
+            const indiceInicio = (paginaActual - 1) * resultadosPorPagina;
+            const indiceFinal = paginaActual * resultadosPorPagina;
+            const recetasPagina = recetas.slice(indiceInicio, indiceFinal);
+            resultado.appendChild(heading);
+            recetasPagina.forEach(receta => {
+                const {idMeal, strMeal, strMealThumb} = receta;
+                const recetaContenedor = document.createElement('DIV');
+                recetaContenedor.classList.add('col-md-4');
 
-            const recetaCard = document.createElement('DIV');
-            recetaCard.classList.add('card', 'mb-4');
+                const recetaCard = document.createElement('DIV');
+                recetaCard.classList.add('card', 'mb-4');
 
-            const recetaImagen = document.createElement('IMG');
-            recetaImagen.classList.add('card-img-top');
-            recetaImagen.alt = `Imagen de la receta ${strMeal ?? receta.titulo}`;
-            recetaImagen.src = strMealThumb ?? receta.img;
+                const recetaImagen = document.createElement('IMG');
+                recetaImagen.classList.add('card-img-top');
+                recetaImagen.alt = `Imagen de la receta ${strMeal ?? receta.titulo}`;
+                recetaImagen.src = strMealThumb ?? receta.img;
 
-            const recetaCardCuerpo = document.createElement('DIV');
-            recetaCardCuerpo.classList.add('card-body');
-            
-            const recetaTitulo = document.createElement('h3');
-            recetaTitulo.classList.add('card-title','mb-3');
-            recetaTitulo.textContent = strMeal ?? receta.titulo;
+                const recetaCardCuerpo = document.createElement('DIV');
+                recetaCardCuerpo.classList.add('card-body');
+                
+                const recetaTitulo = document.createElement('h3');
+                recetaTitulo.classList.add('card-title','mb-3');
+                recetaTitulo.textContent = strMeal ?? receta.titulo;
 
-            const recetaBoton = document.createElement('BUTTON');
-            recetaBoton.classList.add('btn', 'btn-success','w-100');
-            recetaBoton.textContent = 'Ver Receta';
-            // recetaBoton.dataset.bsTarget = "#modal";
-            // recetaBoton.dataset.bsToggle = "modal";
-            recetaBoton.onclick = function(){
-                seleccionarReceta(idMeal ?? receta.id);
-            }
-            //Agregarlo en el codigo HTML 
-            recetaCardCuerpo.appendChild(recetaTitulo);
-            recetaCardCuerpo.appendChild(recetaBoton);
+                const recetaBoton = document.createElement('BUTTON');
+                recetaBoton.classList.add('btn', 'btn-success','w-100');
+                recetaBoton.textContent = 'Ver Receta';
+                // recetaBoton.dataset.bsTarget = "#modal";
+                // recetaBoton.dataset.bsToggle = "modal";
+                recetaBoton.onclick = function(){
+                    seleccionarReceta(idMeal ?? receta.id);
+                }
+                //Agregarlo en el codigo HTML 
+                recetaCardCuerpo.appendChild(recetaTitulo);
+                recetaCardCuerpo.appendChild(recetaBoton);
 
-            recetaCard.appendChild(recetaImagen);
-            recetaCard.appendChild(recetaCardCuerpo);
+                recetaCard.appendChild(recetaImagen);
+                recetaCard.appendChild(recetaCardCuerpo);
 
-            recetaContenedor.appendChild(recetaCard);
+                recetaContenedor.appendChild(recetaCard);
 
-            resultado.appendChild(recetaContenedor);
-            // console.log(recetaImagen);
-        })
+                resultado.appendChild(recetaContenedor);
+                // console.log(recetaImagen);
+            })
+        }
         // Ya que ahora no necseitamos que este obligado a estar al fin de la web, podemos quitar la clase
         const footer = document.querySelector('footer');
         footer.classList.remove('fixed-bottom');
