@@ -1,8 +1,11 @@
 //Estamos utilizando la base de datos MEALDB y accedemos a ella a traves de su API
 function iniciarApp(){
+    //Lista Recetas
     let listaRecetas = [];
+    //Paginacion Pagina Actual empieza en 1 y vamos a mostrar 9 elementos por pagina
     let paginaActual = 1;
     let resultadosPorPagina = 9;
+    //Queries   
     const resultado = document.querySelector('#resultado');
     const selectCategorias = document.querySelector('#categorias');
     if(selectCategorias){
@@ -14,29 +17,18 @@ function iniciarApp(){
     if(favoritosHTML){
         obtenerFavoritos();
     }
+    //Modal
     const modal = new bootstrap.Modal('#modal',{});
+    //Paginacion
     const btnPaginaAnterior = document.querySelector('#btnPaginaAnterior');
     const btnPaginaSiguiente = document.querySelector('#btnPaginaSiguiente');
+    
     if (btnPaginaAnterior && btnPaginaSiguiente) {
         console.log('entre');
         btnPaginaAnterior.addEventListener('click', paginaAnterior);
         btnPaginaSiguiente.addEventListener('click', paginaSiguiente);
     }
-    // Función para avanzar a la página siguiente
-    function paginaSiguiente() {
-        console.log('entre Siguiente');
-        paginaActual++;
-        mostrarRecetas(listaRecetas);
-    }
-    // Función para retroceder a la página anterior
-    function paginaAnterior() {
-        if (paginaActual > 1) {
-            console.log('entre Anterior');
-            paginaActual--;
-            mostrarRecetas(listaRecetas);
-        }
-    }
-
+    //Esta funcion obtiene las categorias
     async function obtenerCategorias() {
         try {
             const url = 'https://www.themealdb.com/api/json/v1/1/categories.php';
@@ -47,6 +39,7 @@ function iniciarApp(){
             console.error('Error:', error);
         }
     }
+    //Esta funcion obtiene los favoritos
     function mostrarCategorias(categorias = []){
         categorias.forEach(categoria => {
             const {strCategory} = categoria;
@@ -56,6 +49,7 @@ function iniciarApp(){
             selectCategorias.appendChild(option);
         });
     }
+    //Esta funcion selecciona la categoria de la API
     function seleccionarCategoria(e){
         const categoria = e.target.value;
         const url = `https://www.themealdb.com/api/json/v1/1/filter.php?c=${categoria}`;
@@ -68,6 +62,7 @@ function iniciarApp(){
                 
             });
     }
+    //Esta funcion muestra las recetas en el HTML
     function mostrarRecetas(recetas = []){
         limpiarHTML(resultado);
         const heading = document.createElement('H2');
@@ -124,12 +119,14 @@ function iniciarApp(){
         const footer = document.querySelector('footer');
         footer.classList.remove('fixed-bottom');
     }
+    //Esta funcion accede a la API y obtiene la receta
     function seleccionarReceta(id){
         const url = `https://themealdb.com/api/json/v1/1/lookup.php?i=${id}`;
         fetch(url)
             .then(answer => answer.json())
             .then(answer => mostrarRecetaModal(answer.meals[0]));
     }
+    //Esta funcion muestra la receta en el modal
     function mostrarRecetaModal(receta){
         // Mostrando el modal
         const {idMeal, strInstructions, strMeal, strMealThumb} = receta;
@@ -194,6 +191,7 @@ function iniciarApp(){
         //Mostrar el modal
         modal.show();
     }
+    //Esta funcion agregara o eliminara la receta del local storage
     function agregarFavorito(receta){
         const favoritos = JSON.parse(localStorage.getItem('favoritos')) ?? [];
         localStorage.setItem('favoritos', JSON.stringify([...favoritos, receta]));
@@ -203,10 +201,12 @@ function iniciarApp(){
         const nuevosFavoritos = favoritos.filter(favorito => favorito.id !== id);
         localStorage.setItem('favoritos', JSON.stringify(nuevosFavoritos));
     }
+    //Esta funcion verifica si la receta ya esta en el local storage
     function existeStorage(id){
         const favoritos = JSON.parse(localStorage.getItem('favoritos')) ?? [];
         return favoritos.some(favorito => favorito.id === id);
     }
+    //Esta funcion muestra los favoritos en el HTML
     function mostrarToast(mensaje){
         const toastDiv = document.querySelector('#toast');
         const toastBody = document.querySelector('.toast-body');
@@ -214,6 +214,7 @@ function iniciarApp(){
         toastBody.textContent = mensaje;
         toast.show();
     }
+    //Esta funcion obtiene los favoritos en el HTML
     function obtenerFavoritos(){
         const favoritos = JSON.parse(localStorage.getItem('favoritos')) ?? [];
         if(favoritos.length){
@@ -224,6 +225,20 @@ function iniciarApp(){
         noFavoritos.textContent = 'No hay favoritos aun';
         noFavoritos.classList.add('fs-4', 'text-center', 'font-bold','mt-5');
         favoritosHTML.appendChild(noFavoritos);
+    }
+    // Función para avanzar a la página siguiente
+    function paginaSiguiente() {
+        console.log('entre Siguiente');
+        paginaActual++;
+        mostrarRecetas(listaRecetas);
+    }
+    // Función para retroceder a la página anterior
+    function paginaAnterior() {
+        if (paginaActual > 1) {
+            console.log('entre Anterior');
+            paginaActual--;
+            mostrarRecetas(listaRecetas);
+        }
     }
     function limpiarHTML(selector){
         while(selector.firstChild){
